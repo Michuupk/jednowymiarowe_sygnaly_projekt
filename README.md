@@ -1,1 +1,2 @@
-# jednowymiarowe_sygnaly_projekt
+# jendowymiarowe_sygnaly_projekt
+Projekt mgr1sem przetwarzanie jednowymiarowych sygnałów biomedycznych
