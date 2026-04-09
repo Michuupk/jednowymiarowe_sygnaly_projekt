@@ -3,10 +3,7 @@ import wfdb
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from google.colab import auth
-from oauth2client.client import GoogleCredentials
+
 
 # KONFIGURACJA - ZMIEŃ NA SWOJE!
 data_dir = '/content/data'  # Lokalny folder w Colab
