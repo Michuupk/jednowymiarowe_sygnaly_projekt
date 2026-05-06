@@ -8,16 +8,14 @@ class SignalProcessor:
         self.abp = np.array(abp_data)
         self.fs = sampling_freq
 
-    def filtracja_sygnalow(self):
-        lowcut = 0.02
-        highcut = 10.0 
+    def filtracja_sygnalow(self, lowcut: float = 0.02, highcut: float = 10.0):
         nyq = 0.5 * self.fs
         low = lowcut / nyq
         high = highcut / nyq
         b, a = butter(4, [low, high], btype='band')
         
-        self.icp = filtfilt(b, a, self.icp)
-        self.abp = filtfilt(b, a, self.abp)
+        #self.icp = filtfilt(b, a, self.icp)
+        #self.abp = filtfilt(b, a, self.abp)
         print("Sygnały przefiltrowane.")
 
     def usun_szumy(self):
