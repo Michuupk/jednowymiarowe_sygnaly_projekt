@@ -10,27 +10,72 @@ class Signal:
         self.mean_values = None  # Tu trafią dane po packet_averaging
 
     def filter_signal(self, lowcut: float = 0.02, highcut: float = 10.0, order: int = 4):
+        # 1. Sprawdzenie, czy mamy dane do filtrowania
+        if self.data is None or len(self.data) == 0:
+            print(f"[{self.name}] Błąd: Brak danych do filtrowania.")
+            return
+
+        # 2. Wyliczenie minimalnej wymaganej długości (reguła kciuka dla filtfilt)
+        # scipy zazwyczaj wymaga padlen = 3 * max(len(a), len(b))
+        required_len = 3 * (order + 1) # dla butterworth len(a) i len(b) to order+1
+        
+        if len(self.data) <= required_len:
+            print(f"[{self.name}] Sygnał za krótki ({len(self.data)} pkt), pomijam filtrowanie.")
+            return
+
+        # 3. Standardowa procedura filtrowania
         nyq = 0.5 * self.fs
         low = lowcut / nyq
         high = highcut / nyq
+        
+        # Zabezpieczenie przed przekroczeniem częstotliwości Nyquista
+        high = min(high, 0.99) 
+        
         b, a = butter(order, [low, high], btype='band')
         
-        # filtfilt zapobiega przesunięciu fazowemu
-        self.data = filtfilt(b, a, self.data)
-        print(f"[{self.name}] Sygnał przefiltrowany.")
+        try:
+            # Ustawienie padlen na mniejszą wartość, jeśli sygnał jest na granicy
+            # lub pozostawienie domyślnego
+            self.data = filtfilt(b, a, self.data)
+            print(f"[{self.name}] Sygnał przefiltrowany.")
+        except ValueError as e:
+            print(f"[{self.name}] Błąd podczas filtrowania: {e}")
 
     def remove_noise(self, min_val=None, max_val=None, diff_threshold=50):
-        # Usuwanie po wartościach bezwzględnych
+
         if min_val is not None:
             self.data[self.data < min_val] = np.nan
         if max_val is not None:
             self.data[self.data > max_val] = np.nan
         
-        # Usuwanie nagłych skoków (różnicowe)
         samples_in_05s = int(0.5 * self.fs)
-        # Przesunięcie i obliczenie różnicy
-        diff = np.abs(np.append(np.zeros(samples_in_05s), self.data[samples_in_05s:] - self.data[:-samples_in_05s]))
-        self.data[diff > diff_threshold] = np.nan
+
+        if len(self.data) > samples_in_05s:
+            # Obliczamy różnice: obecny punkt minus punkt sprzed 0.5s
+            diffs = np.abs(self.data[samples_in_05s:] - self.data[:-samples_in_05s])
+            
+            # Tworzymy maskę o rozmiarze całego sygnału (domyślnie False)
+            mask_diff = np.zeros(len(self.data), dtype=bool)
+            
+            # Przypisujemy wyniki różnic (pamiętając o przesunięciu indeksów)
+            mask_diff[samples_in_05s:] = diffs > diff_threshold
+            
+            # Nakładamy maskę na dane
+            self.data[mask_diff] = np.nan
+
+        nans = np.isnan(self.data)
+        if np.any(nans):
+            # Tworzymy funkcję pomocniczą, która "rozumie" gdzie są poprawne dane
+            # x: indeksy wszystkich punktów
+            # xp: indeksy tylko tych punktów, które NIE są NaN
+            # fp: wartości punktów, które NIE są NaN
+            x = np.arange(len(self.data))
+            xp = x[~nans]
+            fp = self.data[~nans]
+            
+            # Wstawiamy zinterpolowane wartości tam, gdzie były NaN
+            self.data[nans] = np.interp(x[nans], xp, fp)
+            
         print(f"[{self.name}] Szumy usunięte.")
 
     def packet_averaging(self, x_seconds):

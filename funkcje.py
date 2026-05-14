@@ -4,14 +4,9 @@ import pywt # pamiętaj o pip install PyWavelets
 import pandas as pd
 
 # --- 3. WSKAŹNIK PRx (Analiza z artykułu) ---
-def PRx(icp_czyste, abp_czyste, fs):
-    okno_sekundy = 5
-    okno_probki = int(okno_sekundy * fs)
-    df = pd.DataFrame({'ABP': abp_czyste, 'ICP': icp_czyste})
+def calculate_PRx(icp, abp, fs):
+    df = pd.DataFrame({'ABP': abp, 'ICP': icp})
 
-    df_srednie = df.groupby(df.index // okno_probki).mean()
-
-    okno_korelacji = 60 
     prx = df_srednie['ICP'].rolling(window=okno_korelacji).corr(df_srednie['ABP'])
     
     return prx
