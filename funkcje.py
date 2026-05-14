@@ -1,6 +1,20 @@
 import numpy as np
 from scipy.signal import coherence, stft
 import pywt # pamiętaj o pip install PyWavelets
+import pandas as pd
+
+# --- 3. WSKAŹNIK PRx (Analiza z artykułu) ---
+def PRx(icp_czyste, abp_czyste, fs):
+    okno_sekundy = 5
+    okno_probki = int(okno_sekundy * fs)
+    df = pd.DataFrame({'ABP': abp_czyste, 'ICP': icp_czyste})
+
+    df_srednie = df.groupby(df.index // okno_probki).mean()
+
+    okno_korelacji = 60 
+    prx = df_srednie['ICP'].rolling(window=okno_korelacji).corr(df_srednie['ABP'])
+    
+    return prx
 
 def analiza_falkowa(sygnal, fs, skala_min=5, skala_max=20, krok=1):
     skale = np.arange(skala_min, skala_max + krok, krok)
