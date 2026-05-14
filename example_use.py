@@ -1,9 +1,6 @@
 import numpy as np
 
-# IMPORTUJEMY KLASĘ Z PLIKU processor.py
 from processor import SignalProcessor
-
-# IMPORTUJEMY FUNKCJE Z PLIKU analysis.py
 from funkcje import analiza_falkowa, analiza_koherencji
 
 fs = 100 # np. 100 Hz

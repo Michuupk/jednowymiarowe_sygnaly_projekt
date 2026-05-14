@@ -2,47 +2,66 @@ import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt
 
-class SignalProcessor:
-    def __init__(self, icp_data, abp_data, sampling_freq):
-        self.icp = np.array(icp_data)
-        self.abp = np.array(abp_data)
+class Signal:
+    def __init__(self, data, sampling_freq, name="Signal"):
+        self.data = np.array(data, dtype=float)
         self.fs = sampling_freq
+        self.name = name
+        self.mean_values = None  # Tu trafią dane po packet_averaging
 
-    def filtracja_sygnalow(self):
-        lowcut = 0.02
-        highcut = 10.0 
+    def filter_signal(self, lowcut: float = 0.02, highcut: float = 10.0, order: int = 4):
         nyq = 0.5 * self.fs
         low = lowcut / nyq
         high = highcut / nyq
-        b, a = butter(4, [low, high], btype='band')
+        b, a = butter(order, [low, high], btype='band')
         
-        self.icp = filtfilt(b, a, self.icp)
-        self.abp = filtfilt(b, a, self.abp)
-        print("Sygnały przefiltrowane.")
+        # filtfilt zapobiega przesunięciu fazowemu
+        self.data = filtfilt(b, a, self.data)
+        print(f"[{self.name}] Sygnał przefiltrowany.")
 
-    def usun_szumy(self):
-        icp_mask_bad = (self.icp < -1) | (self.icp > 100)
-        self.icp[icp_mask_bad] = np.nan 
-        self.abp[self.abp < 20] = np.nan
+    def remove_noise(self, min_val=None, max_val=None, diff_threshold=50):
+        # Usuwanie po wartościach bezwzględnych
+        if min_val is not None:
+            self.data[self.data < min_val] = np.nan
+        if max_val is not None:
+            self.data[self.data > max_val] = np.nan
         
+        # Usuwanie nagłych skoków (różnicowe)
         samples_in_05s = int(0.5 * self.fs)
-        icp_diff = np.abs(np.append(np.zeros(samples_in_05s), self.icp[samples_in_05s:] - self.icp[:-samples_in_05s]))
-        abp_diff = np.abs(np.append(np.zeros(samples_in_05s), self.abp[samples_in_05s:] - self.abp[:-samples_in_05s]))
-        
-        self.icp[icp_diff > 50] = np.nan
-        self.abp[abp_diff > 50] = np.nan
-        print("Szumy usunięte.")
+        # Przesunięcie i obliczenie różnicy
+        diff = np.abs(np.append(np.zeros(samples_in_05s), self.data[samples_in_05s:] - self.data[:-samples_in_05s]))
+        self.data[diff > diff_threshold] = np.nan
+        print(f"[{self.name}] Szumy usunięte.")
 
     def packet_averaging(self, x_seconds):
         samples_per_packet = int(x_seconds * self.fs)
-        df = pd.DataFrame({'ICP': self.icp, 'ABP': self.abp})
-        averaged = df.groupby(np.arange(len(df)) // samples_per_packet).mean()
-        
-        self.mean_icp = averaged['ICP'].values
-        self.map_abp = averaged['ABP'].values
-        return self.mean_icp, self.map_abp
+        # Używamy pandas do łatwego liczenia średniej z pominięciem NaN
+        series = pd.Series(self.data)
+        self.mean_values = series.groupby(np.arange(len(series)) // samples_per_packet).mean().values
+        return self.mean_values
 
-    def windowing(self, par_x):
-        okna_icp = np.lib.stride_tricks.sliding_window_view(self.mean_icp, window_shape=par_x)
-        okna_abp = np.lib.stride_tricks.sliding_window_view(self.map_abp, window_shape=par_x)
+class ICP_ABP_Processor:
+    def __init__(self, icp_data, abp_data, sampling_freq):
+        # Tworzymy osobne obiekty dla ICP i ABP
+        self.icp = Signal(icp_data, sampling_freq, name="ICP")
+        self.abp = Signal(abp_data, sampling_freq, name="ABP")
+        self.fs = sampling_freq
+
+    def process_all(self):
+        # Możesz wywoływać metody z różnymi parametrami dla każdego sygnału
+        self.icp.remove_noise(min_val=-1, max_val=100)
+        self.abp.remove_noise(min_val=20)
+        
+        self.icp.filter_signal()
+        self.abp.filter_signal()
+
+    def get_windowed_data(self, x_seconds_avg, window_size):
+        # Średnie kroczące / pakietowe
+        mean_icp = self.icp.packet_averaging(x_seconds_avg)
+        mean_abp = self.abp.packet_averaging(x_seconds_avg)
+        
+        # Okienkowanie (sliding window)
+        okna_icp = np.lib.stride_tricks.sliding_window_view(mean_icp, window_shape=window_size)
+        okna_abp = np.lib.stride_tricks.sliding_window_view(mean_abp, window_shape=window_size)
+        
         return okna_icp, okna_abp
