@@ -4,12 +4,31 @@ import pywt # pamiętaj o pip install PyWavelets
 import pandas as pd
 
 # --- 3. WSKAŹNIK PRx (Analiza z artykułu) ---
-def calculate_PRx(icp, abp, fs):
-    df = pd.DataFrame({'ABP': abp, 'ICP': icp})
+def calculate_PRx(okna_icp, okna_abp):
+    """
+    icp i abp to macierze z funkcji sliding_window_view
+    kształt: (liczba_okien, punkty_w_oknie)
+    """
+    prx_values = []
 
-    prx = df_srednie['ICP'].rolling(window=okno_korelacji).corr(df_srednie['ABP'])
-    
-    return prx
+    # Iterujemy po każdym oknie czasowym
+    for i in range(len(okna_icp)):
+        # Wyciągamy pojedyncze okno dla obu sygnałów
+        icp_window = okna_icp[i]
+        abp_window = okna_abp[i]
+
+        # Tworzymy DataFrame tylko dla tego jednego okna (opcjonalnie)
+        # lub używamy bezpośrednio numpy dla szybkości:
+        
+        # Usuwamy NaN z obu sygnałów jednocześnie (jeśli są)
+        mask = ~np.isnan(icp_window) & ~np.isnan(abp_window)
+        if np.sum(mask) > 2:  # Potrzebujemy min. 3 punktów do korelacji
+            r = np.corrcoef(icp_window[mask], abp_window[mask])[0, 1]
+            prx_values.append(r)
+        else:
+            prx_values.append(np.nan)
+
+    return np.array(prx_values)
 
 def analiza_falkowa(sygnal, fs, skala_min=5, skala_max=20, krok=1):
     skale = np.arange(skala_min, skala_max + krok, krok)
