@@ -1,0 +1,14 @@
+{'pre_event_start_min': 15, 'event_start_min': 75, 'event_end_min': 109, 'duration_min': 35}
+{'pre_event_start_min': 470, 'event_start_min': 530, 'event_end_min': 569, 'duration_min': 40}
+{'pre_event_start_min': 830, 'event_start_min': 890, 'event_end_min': 898, 'duration_min': 9}
+{'pre_event_start_min': 847, 'event_start_min': 907, 'event_end_min': 911, 'duration_min': 5}
+{'pre_event_start_min': 1143, 'event_start_min': 1203, 'event_end_min': 1207, 'duration_min': 5}
+{'pre_event_start_min': 1163, 'event_start_min': 1223, 'event_end_min': 1227, 'duration_min': 5}
+{'pre_event_start_min': 1202, 'event_start_min': 1262, 'event_end_min': 1269, 'duration_min': 8}
+{'pre_event_start_min': 1211, 'event_start_min': 1271, 'event_end_min': 1987, 'duration_min': 717}
+{'pre_event_start_min': 2816, 'event_start_min': 2876, 'event_end_min': 2904, 'duration_min': 29}
+{'pre_event_start_min': 2992, 'event_start_min': 3052, 'event_end_min': 3056, 'duration_min': 5}
+{'pre_event_start_min': 3029, 'event_start_min': 3089, 'event_end_min': 3107, 'duration_min': 19}
+{'pre_event_start_min': 3056, 'event_start_min': 3116, 'event_end_min': 3122, 'duration_min': 7}
+{'pre_event_start_min': 3208, 'event_start_min': 3268, 'event_end_min': 3279, 'duration_min': 12}
+{'pre_event_start_min': 3334, 'event_start_min': 3394, 'event_end_min': 3412, 'duration_min': 19}
