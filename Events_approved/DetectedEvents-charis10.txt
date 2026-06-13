@@ -1,0 +1,6 @@
+{'pre_event_start_min': 917, 'event_start_min': 977, 'event_end_min': 981, 'duration_min': 5}
+{'pre_event_start_min': 923, 'event_start_min': 983, 'event_end_min': 992, 'duration_min': 10}
+{'pre_event_start_min': 1051, 'event_start_min': 1111, 'event_end_min': 1150, 'duration_min': 40}
+
+Start : 16h
+Koniec : 19h
