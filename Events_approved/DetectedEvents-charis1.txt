@@ -1,0 +1,4 @@
+{'pre_event_start_min': 15, 'event_start_min': 75, 'event_end_min': 100, 'duration_min': 26}
+
+start = 0
+end = 33
