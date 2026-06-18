@@ -214,6 +214,8 @@
 {'pre_event_start_min': 19086, 'event_start_min': 19146, 'event_end_min': 19155, 'duration_min': 10}
 {'pre_event_start_min': 19142, 'event_start_min': 19202, 'event_end_min': 19330, 'duration_min': 129}
 
+
+
 Start: 10h
 Koniec: 320h
 

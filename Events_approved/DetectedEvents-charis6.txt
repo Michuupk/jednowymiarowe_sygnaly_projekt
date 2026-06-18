@@ -9,3 +9,9 @@
 {'pre_event_start_min': 2327, 'event_start_min': 2387, 'event_end_min': 2449, 'duration_min': 63}
 {'pre_event_start_min': 2430, 'event_start_min': 2490, 'event_end_min': 2653, 'duration_min': 164}
 {'pre_event_start_min': 2595, 'event_start_min': 2655, 'event_end_min': 2758, 'duration_min': 104}
+
+Start: 0h
+Koniec: 44.40h
+
+Artefakty do usunięcia:
+13.42-14.12h, 16-18.13h, 28.45-28.62h 
