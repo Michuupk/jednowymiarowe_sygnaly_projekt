@@ -1,2 +1,4 @@
 charis-database-1.0.0/
 /__pycache__
+/Events/*
+/.venv
