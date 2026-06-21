@@ -1,0 +1,22 @@
+[{'pre_event_start_min': 805, 'event_start_min': 865, 'event_end_min': 870, 'duration_min': 6},
+{'pre_event_start_min': 2562, 'event_start_min': 2622, 'event_end_min': 2628, 'duration_min': 7},
+{'pre_event_start_min': 2997, 'event_start_min': 3057, 'event_end_min': 3079, 'duration_min': 23},
+{'pre_event_start_min': 3688, 'event_start_min': 3748, 'event_end_min': 3767, 'duration_min': 20},
+{'pre_event_start_min': 3922, 'event_start_min': 3982, 'event_end_min': 3992, 'duration_min': 11},
+{'pre_event_start_min': 4387, 'event_start_min': 4447, 'event_end_min': 4498, 'duration_min': 52},
+{'pre_event_start_min': 9422, 'event_start_min': 9482, 'event_end_min': 9491, 'duration_min': 10},
+{'pre_event_start_min': 10315, 'event_start_min': 10375, 'event_end_min': 10385, 'duration_min': 11},
+{'pre_event_start_min': 11302, 'event_start_min': 11362, 'event_end_min': 11368, 'duration_min': 7},
+{'pre_event_start_min': 13412, 'event_start_min': 13472, 'event_end_min': 13487, 'duration_min': 16},
+{'pre_event_start_min': 17620, 'event_start_min': 17680, 'event_end_min': 17710, 'duration_min': 31}]
+
+start = 12
+end = 296
+
+skip_times=[
+    [57,58],
+    [84.5, 85.3],
+    [156.5, 157],
+    [203,203.5],
+    [209,209.5]
+]
