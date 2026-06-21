@@ -1,0 +1,14 @@
+{'pre_event_start_min': 186, 'event_start_min': 246, 'event_end_min': 256, 'duration_min': 11}
+{'pre_event_start_min': 1880, 'event_start_min': 1940, 'event_end_min': 1948, 'duration_min': 9}
+
+start = 0
+end = 45
+
+pair_time_sectors:[
+            [13, 14.25]
+            
+]
+
+
+
+
