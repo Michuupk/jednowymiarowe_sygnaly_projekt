@@ -66,57 +66,76 @@ def analiza_koherencji(sygnal1, sygnal2, fs):
     powiazane = koherencja_w_pasmie > 0.5
     return f_zainteresowania, koherencja_w_pasmie, powiazane
 
-def defineTimeZones(PRx: np.ndarray, start: float, end: float, event_time_sectors: list, skip_time_sectors: list = None):
+def defineTimeZones(PRx: np.ndarray, event_time_sectors: list, skip_time_sectors: list = None):
     """
-    Filtruje macierz wyników PRx na podstawie globalnego zakresu czasu, 
-    listy zdefiniowanych sektorów zdarzeń (jako słowniki w minutach) oraz sektorów odrzuconych.
-    
-    Argumenty:
-    PRx: macierz NumPy o kształcie (N, 2), gdzie kolumna 0 to czas (h), a kolumna 1 to wartość PRx.
-    start: globalny czas początkowy w godzinach (np. 2.5).
-    end: globalny czas końcowy w godzinach (np. 17.75).
-    event_time_sectors: lista słowników z czasem w minutach, 
-                        np. [{'event_start_min': 75, 'event_end_min': 100}, {'event_start_min': 200, 'event_end_min': 250}]
-    skip_time_sectors: lista przedziałów do całkowitego pominięcia w godzinach, 
-                       np. [[3.5, 3.6], [10.0, 10.2]] (domyślnie None).
+    Filtruje macierz wyników PRx.
     
     Zwraca:
-    eventPRx: macierz z danymi wewnątrz zdarzeń (z wykluczeniem skip_time_sectors).
-    normalPRx: macierz z danymi poza zdarzeniami (z wykluczeniem skip_time_sectors).
-    wholePRx: macierz z całymi danymi wewnątrz globalnego czasu (z wykluczeniem skip_time_sectors).
+    - eventPRx: wyłącznie z przedziałów [event_start_min, event_end_min]
+    - normalPRx: wyłącznie z przedziałów [pre_event_start_min, event_start_min)
+    - wholePRx: zaczyna się 15 minut przed pierwszym pre_event_start_min 
+                (lub od 0, jeśli zabraknie czasu na początku), 
+                a kończy równo 60 minut (1 godzinę) po ostatnim event_end_min.
     """
-    # Wyciągamy całą kolumnę czasu (w godzinach) dla wygody
+    if not event_time_sectors:
+        raise ValueError("Lista event_time_sectors nie może być pusta.")
+
     czas = PRx[:, 0]
     
-    # 1. Tworzymy maskę globalną (czy dany punkt mieści się między 'start' a 'end')
-    global_mask = (czas >= start) & (czas <= end)
+    # --- 1. Wyliczanie ram czasowych dla wholePRx ---
+    # Koniec ostatniego eventu
+    last_event_end_min = event_time_sectors[-1]['event_end_min']
     
-    # 2. Tworzymy maskę do pominięcia (skip_mask) - na podstawie godzin
+    # Dodajemy 60 minut (1 godzinę) do globalnego końca
+    global_end_min = last_event_end_min + 60.0
+    
+    # Pobieramy początek najwcześniejszego pre-eventu
+    first_pre_event_start_min = event_time_sectors[0]['pre_event_start_min']
+    
+    # Globalny start cofnięty o 15 minut. 
+    # Używamy max(0, ...), by nie wejść w czas ujemny w przypadku wczesnych eventów.
+    global_start_min = max(0, first_pre_event_start_min - 15.0)
+    
+    # Konwersja na godziny dla wholePRx
+    global_start_h = global_start_min / 60.0
+    global_end_h = global_end_min / 60.0
+    
+    # Maska dla całego ustalonego okna (wholePRx)
+    whole_mask = (czas >= global_start_h) & (czas <= global_end_h)
+
+    # --- 2. Tworzymy maskę do pominięcia artefaktów (skip_mask) ---
     skip_mask = np.zeros(len(PRx), dtype=bool)
     if skip_time_sectors is not None:
         for sk_start, sk_end in skip_time_sectors:
             skip_mask |= (czas >= sk_start) & (czas <= sk_end)
-            
-    # 3. Tworzymy maskę zdarzeń na podstawie listy słowników
+
+    # --- 3. Inicjalizacja masek dla event i normal ---
     event_mask = np.zeros(len(PRx), dtype=bool)
+    normal_mask = np.zeros(len(PRx), dtype=bool)
+
+    # Budowanie masek z dokładnych przedziałów dla każdego zdarzenia
     for seg in event_time_sectors:
-        # Konwersja z minut na godziny
         e_start = seg['event_start_min'] / 60.0
         e_end = seg['event_end_min'] / 60.0
-        # Dodajemy zdarzenie do ogólnej maski zdarzeń (operator logiczny LUB: '|')
+        p_start = seg['pre_event_start_min'] / 60.0
+        
+        # Event: od event_start_min do event_end_min
         event_mask |= (czas >= e_start) & (czas <= e_end)
         
-    # 4. Łączymy maski w ostateczne warunki
-    # eventPRx: w przedziale globalnym ORAZ w którymkolwiek zdarzeniu ORAZ NIE pomijane
-    is_event = global_mask & event_mask & ~skip_mask
+        # Normal/Pre-event: od pre_event_start_min do event_start_min
+        normal_mask |= (czas >= p_start) & (czas < e_start)
+
+    # --- 4. Łączenie warunków z priorytetami ---
+    # Wykluczamy skip_mask ze wszystkich stref
+    is_event = event_mask & ~skip_mask
     
-    # normalPRx: w przedziale globalnym ORAZ NIE w zdarzeniach ORAZ NIE pomijane
-    is_normal = global_mask & ~event_mask & ~skip_mask
+    # Zabezpieczenie, by normal nie nachodził na żaden event
+    is_normal = normal_mask & ~event_mask & ~skip_mask 
     
-    # wholePRx: w przedziale globalnym ORAZ NIE pomijane (zawiera w sobie event i normal)
-    is_whole = global_mask & ~skip_mask
-    
-    # 5. Wycinamy odpowiednie wiersze z macierzy
+    # whole obejmuje wyliczony zakres z uwzględnieniem dodatkowej godziny na końcu i 15 min na początku
+    is_whole = whole_mask & ~skip_mask
+
+    # --- 5. Wycinanie odpowiednich wierszy z macierzy ---
     eventPRx = PRx[is_event]
     normalPRx = PRx[is_normal]
     wholePRx = PRx[is_whole]
@@ -227,15 +246,18 @@ def kolmogorovSmirnov(event_vals, normal_vals):
     )
 
     fig.update_layout(
-        title=dict(text=tytul_wykresu, x=0.5),
+        title=dict(text=tytul_wykresu, x=0.5, y=0.95),
         template='plotly_white',
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.05,
-            xanchor="center", x=0.5
+            yanchor="top", 
+            y=-0.1,  # Zmienione: podniesiono lekko wyżej, żeby na pewno weszło w kadr
+            xanchor="center", 
+            x=0.5
         ),
+        margin=dict(t=120, b=120),  # Zmienione: znacznie większy margines na dole na legendę
         width=1200,
-        height=600
+        height=650  # Zmienione: lekko podbita całkowita wysokość obszaru roboczego
     )
 
     # Formatowanie osi dla pierwszego wykresu (eCDF)

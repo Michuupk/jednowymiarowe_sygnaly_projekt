@@ -10,9 +10,6 @@
 {'pre_event_start_min': 13412, 'event_start_min': 13472, 'event_end_min': 13487, 'duration_min': 16},
 {'pre_event_start_min': 17620, 'event_start_min': 17680, 'event_end_min': 17710, 'duration_min': 31}]
 
-start = 12
-end = 296
-
 skip_times=[
     [57,58],
     [84.5, 85.3],
@@ -20,3 +17,5 @@ skip_times=[
     [203,203.5],
     [209,209.5]
 ]
+
+
